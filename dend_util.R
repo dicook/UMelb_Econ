@@ -1,9 +1,11 @@
 # Function to generate edges of dendrogram
-hierfly <- function(data, metric="euclidean", method="ward.D2") {
-  data <- rescaler(data)
+hierfly <- function(data, h=NULL, metric="euclidean", method="ward.D2", scale=TRUE) {
+  if (scale) data <- rescaler(data)
   id <- 1:nrow(data)
   cat <- sapply(data, is.factor)
-  h <- hclust(dist(data[,!cat], metric), method)
+  if (is.null(h))
+    h <- hclust(dist(data[,!cat], metric), method)
+  #h <- hclust(dist(data, metric), method)
   data_hc <- data
 
   data_hc$ORDER <- order(h$order)
@@ -14,6 +16,7 @@ hierfly <- function(data, metric="euclidean", method="ward.D2") {
   #newr_df <- NULL
   for (i in 1:nrow(h$merge)) {
     newr <- combinerows(data_hc[as.character(-h$merge[i,]),], cat)
+    #newr <- combinerows(data_hc[as.character(-h$merge[i,]),], rownames(data))
     #newr$id <- nrow(data_hc) + i
     newr$HEIGHT <- h$height[i]
     newr$LEVEL <- i
