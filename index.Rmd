@@ -639,10 +639,10 @@ save_html(pg, file="cluster_average.html")
 ```
 
 .pull-left[
-<iframe src="cluster_ward.html" width="500" height="500" scrolling="yes" seamless="seamless" frameBorder="0"> </iframe>
+<iframe src="cluster_ward.html" width="400" height="400" scrolling="yes" seamless="seamless" frameBorder="0"> </iframe>
 ]
 .pull-right[
-<iframe src="cluster_average.html" width="500" height="500" scrolling="yes" seamless="seamless" frameBorder="0"> </iframe>
+<iframe src="cluster_average.html" width="400" height="400" scrolling="yes" seamless="seamless" frameBorder="0"> </iframe>
 ]
 
 ---
@@ -650,11 +650,16 @@ save_html(pg, file="cluster_average.html")
 
 Ward's linkage
 
-```{r echo=FALSE, fig.width=10, fig.height=5}
+.pull-left[
+```{r echo=FALSE, fig.width=5, fig.height=5}
 p1 <- ggplot(ru_hc_pc, aes(x=PC1, y=PC2, colour=as.factor(clw), label=curr)) + geom_point() +
   scale_colour_brewer("", palette="Dark2") + 
   theme(legend.position="none")
 ggplotly(p1)
+```
+]
+.pull-right[
+```{r echo=FALSE, fig.width=5, fig.height=5}
 ru_hc_ts <- data.frame(ru_sub)
 ru_hc_ts$date <- ru$date
 ru_hc_ts <- ru_hc_ts %>%
@@ -662,7 +667,7 @@ ru_hc_ts <- ru_hc_ts %>%
   left_join(select(ru_hc_pc, clw, cla, curr), by="curr")
 p2 <- ggplot(ru_hc_ts, aes(x=date, y=val,
                       colour=factor(clw))) +
-  geom_line(aes(group=curr), alpha=0.2) +
+  geom_line(aes(group=curr, label=curr), alpha=0.2) +
   facet_wrap(~clw) +
   geom_smooth(se=FALSE) +
   ylab("Std rate") +
@@ -670,17 +675,24 @@ p2 <- ggplot(ru_hc_ts, aes(x=date, y=val,
   scale_colour_brewer("", palette="Dark2") + 
   theme(legend.position="none")
 ggplotly(p2)
-#grid.arrange(p1, p2, ncol=2)
 ```
+]
 
 ---
 # Clusters of currencies
 
 Average linkage
 
-```{r echo=FALSE, fig.width=10, fig.height=6}
-p1 <- ggplot(ru_hc_pc, aes(x=PC1, y=PC2, colour=as.factor(cla))) + geom_point() +
-  scale_colour_brewer("", palette="Dark2")
+.pull-left[
+```{r echo=FALSE, fig.width=5, fig.height=5}
+p1 <- ggplot(ru_hc_pc, aes(x=PC1, y=PC2, colour=as.factor(cla), label=curr)) + geom_point() +
+  scale_colour_brewer("", palette="Dark2") + 
+  theme(legend.position="none")
+ggplotly(p1)
+```
+]
+.pull-right[
+```{r echo=FALSE, fig.width=5, fig.height=5}
 ru_hc_ts <- data.frame(ru_sub)
 ru_hc_ts$date <- ru$date
 ru_hc_ts <- ru_hc_ts %>%
@@ -688,16 +700,30 @@ ru_hc_ts <- ru_hc_ts %>%
   left_join(select(ru_hc_pc, clw, cla, curr), by="curr")
 p2 <- ggplot(ru_hc_ts, aes(x=date, y=val,
                      colour=factor(cla))) +
-  geom_line(aes(group=curr), alpha=0.2) +
+  geom_line(aes(group=curr, label=curr), alpha=0.2) +
   facet_wrap(~cla) +
   geom_smooth(se=FALSE) +
   ylab("Std rate") +
   xlab("") +
-  scale_colour_brewer("", palette="Dark2")
-grid.arrange(p1, p2, ncol=2)
+  scale_colour_brewer("", palette="Dark2") + 
+  theme(legend.position="none")
+ggplotly(p2)
 ```
+]
+
+---
+# Construction
+
+- Clustering done on full data set
+- PCA conducted to reduce dimension from 115 to 4 (72% variance explained)
+- Data set extended to add points that represent nodes in the dendrogram
+- Line segments drawn sequentially up the dendrogram connecting points (and nodes) that are fused into a cluster at each step
+- Show in a tour of the 4D PCs
+
 
 ```{r eval=FALSE, echo=FALSE}
+sp3 <- simplex(p=3)
+colnames(sp3$points) <- paste0("V", 1:3)
 library(randomForest)
 data(olive)
 olive_sub <- olive %>% filter(region==1) %>%
@@ -711,15 +737,9 @@ votes <- rbind(sp3$points, votes)
 pal <- ochre_palettes$lorikeet[c(2,3,4,6)]
 col <- pal[votes[,4]]
 
+quartz()
 animate(votes[,-4], grand_tour(), 
-        display_xy(axes = "bottomleft", col=col, edges=sp3$edges))
-
-olive_rf <- randomForest(area~., 
-                         data=olive_sub)
-votes <- f_composition(olive_rf$votes)
-animate(votes[,-4], grand_tour(), 
-        display_xy(axes = "bottomleft", 
-                   col=col, edges=sp3$edges))
+        display_xy(axes = "bottomleft", col=col, edges=as.matrix(sp3$edges)))
 ```
 
 
@@ -727,9 +747,9 @@ animate(votes[,-4], grand_tour(),
 ---
 # Summary
 
-- The tourr package is available for you to look beyond 2D
+- The tour can be used for all sorts of multivariate problems to obtain insight beyond 2D.
 - High-dimensional shapes, how they are defined, what they look like, how they differ is interesting
-- Think about ways to look at the model in the data space
+- Try to examine the model in the data space
 
 ---
 
@@ -739,14 +759,13 @@ class: inverse
 
 - *Tours:* Andreas Buja, Debby Swayne, Heike Hofmann, Hadley Wickham, Ursula Laa and Nick Spyrison
 - *Library of high-d shapes:* Barret Schloerke
-- *Physics application:* Ursula Laa, German Valencia
 - Animations made with the R [plotly](https://plotly-book.cpsievert.me) package, by Carson Sievert
 
 Contact: [`r icon::fa_envelope()`](http://www.dicook.org) dicook@monash.edu, [`r icon::fa_twitter()`](https://twitter.com/visnut) visnut, [`r icon::fa_github()`](https://github.com/dicook) dicook
 
 <img src="img/lorikeets.png" width="200px">
 
-.footnote[Slides made with Rmarkdown, xaringan package by Yihui Xie, and lorikeet theme using the [ochRe package](https://github.com/ropenscilabs/ochRe). Available at [https://github.com/dicook/ISCBASC2018](https://github.com/dicook/ISCBASC2018].)
+.footnote[Slides made with Rmarkdown, xaringan package by Yihui Xie, and lorikeet theme using the [ochRe package](https://github.com/ropenscilabs/ochRe). Available at [https://github.com/dicook/UMelb_Econ](https://github.com/dicook/ISCBASC2018].)
 
 ---
 # Further reading
